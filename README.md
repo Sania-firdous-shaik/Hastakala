@@ -1,8 +1,7 @@
-# CraftMarket - Sri Lankan Handcrafts E-Commerce Platform
+# Hastakala - Indian Handcrafts E-Commerce Platform
 
-A full-stack e-commerce platform connecting talented Sri Lankan artisans with customers who value unique, handcrafted products. Creators can list and manage their handmade products, while customers can browse, purchase, and review items.
+A full-stack e-commerce platform connecting talented Indian artisans with customers who value unique, handcrafted products. Creators can list and manage their handmade products, while customers can browse, purchase, and review items.
 
-![Homepage](screenshots/homepage.png)
 
 ## Features
 
@@ -21,7 +20,7 @@ A full-stack e-commerce platform connecting talented Sri Lankan artisans with cu
 - **Product Management** - Add/edit/delete products with multi-image upload (up to 5 images, 5MB each)
 - **Order Fulfillment** - View and manage orders for your products
 
-![Creator Dashboard](screenshots/creator-dashboard.png)
+
 
 ### Admin Features
 - **Admin Dashboard** - Platform-wide statistics and recent activity
@@ -37,7 +36,6 @@ A full-stack e-commerce platform connecting talented Sri Lankan artisans with cu
 - **Responsive Design** - Mobile-first with Tailwind CSS, smooth transitions, hover effects
 - **Security** - Helmet, rate limiting, CORS, bcrypt password hashing, JWT authentication
 
-![Email Verification](screenshots/email-verification.png)
 
 ## Tech Stack
 
