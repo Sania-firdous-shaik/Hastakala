@@ -12,10 +12,39 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import StatusBadge from '../components/UI/StatusBadge';
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// Backend API URL
+const apiBase = (
+  import.meta.env.VITE_API_URL || 'http://localhost:4000'
+).replace(/\/$/, '');
 
+// Format price in Indian Rupees
 const formatPrice = (price) => {
   return `₹${Number(price || 0).toLocaleString('en-IN')}`;
+};
+
+// Build correct image URL
+const buildImageUrl = (path) => {
+  if (!path) {
+    return '/placeholder-product.jpg';
+  }
+
+  // Already a complete URL
+  if (
+    path.startsWith('http://') ||
+    path.startsWith('https://')
+  ) {
+    return path;
+  }
+
+  // Backend returns paths such as:
+  // /uploads/image.png
+  if (path.startsWith('/')) {
+    return `${apiBase}${path}`;
+  }
+
+  // Also support:
+  // uploads/image.png
+  return `${apiBase}/${path}`;
 };
 
 const tabs = [
@@ -28,6 +57,7 @@ const tabs = [
 ];
 
 // ============ Overview Tab ============
+
 function Overview() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +65,10 @@ function Overview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get(`${apiBase}/api/admin/dashboard`);
+        const response = await axios.get(
+          `${apiBase}/api/admin/dashboard`
+        );
+
         setStats(response.data);
       } catch (error) {
         toast.error('Failed to load dashboard stats');
@@ -43,6 +76,7 @@ function Overview() {
         setLoading(false);
       }
     };
+
     fetchStats();
   }, []);
 
@@ -51,14 +85,23 @@ function Overview() {
       <div className="animate-pulse space-y-6">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-32 rounded-lg"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-32 rounded-lg"
+            ></div>
           ))}
         </div>
       </div>
     );
   }
 
-  if (!stats) return <p className="text-gray-500">Failed to load statistics.</p>;
+  if (!stats) {
+    return (
+      <p className="text-gray-500">
+        Failed to load statistics.
+      </p>
+    );
+  }
 
   const statCards = [
     {
@@ -85,132 +128,281 @@ function Overview() {
 
   return (
     <div className="space-y-8">
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
         {statCards.map((card) => (
-          <div key={card.label} className="bg-white overflow-hidden shadow rounded-lg">
+          <div
+            key={card.label}
+            className="bg-white overflow-hidden shadow rounded-lg"
+          >
             <div className="p-5">
-              <p className="text-sm font-medium text-gray-500 truncate">{card.label}</p>
-              <p className="mt-1 text-3xl font-semibold text-gray-900">{card.value}</p>
-              <p className="mt-1 text-sm text-gray-500">{card.sub}</p>
+
+              <p className="text-sm font-medium text-gray-500 truncate">
+                {card.label}
+              </p>
+
+              <p className="mt-1 text-3xl font-semibold text-gray-900">
+                {card.value}
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                {card.sub}
+              </p>
+
             </div>
           </div>
         ))}
+
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Order Status Breakdown</h3>
+
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Order Status Breakdown
+          </h3>
+
           <div className="space-y-3">
+
             {[
-              { label: 'Pending', value: stats.orders.pending, color: 'bg-yellow-500' },
-              { label: 'Confirmed', value: stats.orders.confirmed, color: 'bg-blue-500' },
-              { label: 'Shipped', value: stats.orders.shipped, color: 'bg-purple-500' },
-              { label: 'Delivered', value: stats.orders.delivered, color: 'bg-green-500' },
+              {
+                label: 'Pending',
+                value: stats.orders.pending,
+                color: 'bg-yellow-500',
+              },
+              {
+                label: 'Confirmed',
+                value: stats.orders.confirmed,
+                color: 'bg-blue-500',
+              },
+              {
+                label: 'Shipped',
+                value: stats.orders.shipped,
+                color: 'bg-purple-500',
+              },
+              {
+                label: 'Delivered',
+                value: stats.orders.delivered,
+                color: 'bg-green-500',
+              },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
+              <div
+                key={item.label}
+                className="flex items-center justify-between"
+              >
+
                 <div className="flex items-center">
-                  <span className={`w-3 h-3 rounded-full ${item.color} mr-2`}></span>
-                  <span className="text-sm text-gray-600">{item.label}</span>
+
+                  <span
+                    className={`w-3 h-3 rounded-full ${item.color} mr-2`}
+                  ></span>
+
+                  <span className="text-sm text-gray-600">
+                    {item.label}
+                  </span>
+
                 </div>
-                <span className="text-sm font-medium text-gray-900">{item.value}</span>
+
+                <span className="text-sm font-medium text-gray-900">
+                  {item.value}
+                </span>
+
               </div>
             ))}
+
           </div>
+
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Product Stats</h3>
+
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Product Stats
+          </h3>
+
           <div className="space-y-3">
+
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Active Products</span>
-              <span className="text-sm font-medium text-green-600">{stats.products.active}</span>
+              <span className="text-sm text-gray-600">
+                Active Products
+              </span>
+
+              <span className="text-sm font-medium text-green-600">
+                {stats.products.active}
+              </span>
             </div>
+
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Inactive Products</span>
-              <span className="text-sm font-medium text-red-600">{stats.products.inactive}</span>
+              <span className="text-sm text-gray-600">
+                Inactive Products
+              </span>
+
+              <span className="text-sm font-medium text-red-600">
+                {stats.products.inactive}
+              </span>
             </div>
+
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Low Stock (&lt;10)</span>
-              <span className="text-sm font-medium text-yellow-600">{stats.products.lowStock}</span>
+              <span className="text-sm text-gray-600">
+                Low Stock (&lt;10)
+              </span>
+
+              <span className="text-sm font-medium text-yellow-600">
+                {stats.products.lowStock}
+              </span>
             </div>
+
           </div>
+
         </div>
+
       </div>
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+
+        {/* Recent Orders */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Orders</h3>
+
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Recent Orders
+          </h3>
+
           {stats.recent.orders.length === 0 ? (
-            <p className="text-sm text-gray-500">No recent orders.</p>
+            <p className="text-sm text-gray-500">
+              No recent orders.
+            </p>
           ) : (
             <div className="space-y-3">
+
               {stats.recent.orders.map((order) => (
-                <div key={order._id} className="flex items-center justify-between text-sm">
+                <div
+                  key={order._id}
+                  className="flex items-center justify-between text-sm"
+                >
+
                   <div>
+
                     <p className="font-medium text-gray-900">
-                      {order.user?.name || order.customerInfo?.name || 'Guest'}
+                      {order.user?.name ||
+                        order.customerInfo?.name ||
+                        'Guest'}
                     </p>
-                    <p className="text-gray-500">{formatPrice(order.totalAmount)}</p>
+
+                    <p className="text-gray-500">
+                      {formatPrice(order.totalAmount)}
+                    </p>
+
                   </div>
+
                   <StatusBadge status={order.status} />
+
                 </div>
               ))}
+
             </div>
           )}
+
         </div>
 
+        {/* Recent Products */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Products</h3>
+
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Recent Products
+          </h3>
+
           {stats.recent.products.length === 0 ? (
-            <p className="text-sm text-gray-500">No recent products.</p>
+            <p className="text-sm text-gray-500">
+              No recent products.
+            </p>
           ) : (
             <div className="space-y-3">
+
               {stats.recent.products.map((product) => (
-                <div key={product._id} className="flex items-center justify-between text-sm">
+                <div
+                  key={product._id}
+                  className="flex items-center justify-between text-sm"
+                >
+
                   <div>
-                    <p className="font-medium text-gray-900">{product.title}</p>
-                    <p className="text-gray-500">
-                      by {product.creator?.name} - {product.category?.name}
+
+                    <p className="font-medium text-gray-900">
+                      {product.title}
                     </p>
+
+                    <p className="text-gray-500">
+                      by {product.creator?.name} -{' '}
+                      {product.category?.name}
+                    </p>
+
                   </div>
+
                   <span className="text-gray-900 font-medium">
                     {formatPrice(product.price)}
                   </span>
+
                 </div>
               ))}
+
             </div>
           )}
+
         </div>
+
       </div>
+
     </div>
   );
 }
 
 // ============ Users Tab ============
+
 function UsersManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0 });
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+  });
 
   const fetchUsers = async (page = 1) => {
     setLoading(true);
-    try {
-      const params = new URLSearchParams({ page, limit: 20 });
-      if (search) params.append('search', search);
-      if (roleFilter) params.append('role', roleFilter);
 
-      const response = await axios.get(`${apiBase}/api/admin/users?${params}`);
+    try {
+      const params = new URLSearchParams({
+        page,
+        limit: 20,
+      });
+
+      if (search) {
+        params.append('search', search);
+      }
+
+      if (roleFilter) {
+        params.append('role', roleFilter);
+      }
+
+      const response = await axios.get(
+        `${apiBase}/api/admin/users?${params}`
+      );
+
       setUsers(response.data.users);
+
       setPagination({
         currentPage: parseInt(response.data.currentPage),
         totalPages: response.data.totalPages,
         total: response.data.total,
       });
+
     } catch (error) {
       toast.error('Failed to load users');
     } finally {
@@ -229,8 +421,12 @@ function UsersManagement() {
 
   const toggleUserStatus = async (userId) => {
     try {
-      const response = await axios.patch(`${apiBase}/api/admin/users/${userId}/toggle-status`);
+      const response = await axios.patch(
+        `${apiBase}/api/admin/users/${userId}/toggle-status`
+      );
+
       toast.success(response.data.message);
+
       fetchUsers(pagination.currentPage);
     } catch (error) {
       toast.error('Failed to update user status');
@@ -238,41 +434,67 @@ function UsersManagement() {
   };
 
   const deleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this user?'
+      )
+    ) {
+      return;
+    }
 
     try {
-      await axios.delete(`${apiBase}/api/admin/users/${userId}`);
+      await axios.delete(
+        `${apiBase}/api/admin/users/${userId}`
+      );
+
       toast.success('User deleted');
+
       fetchUsers(pagination.currentPage);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to delete user');
+      toast.error(
+        error.response?.data?.error ||
+          'Failed to delete user'
+      );
     }
   };
 
   return (
     <div className="space-y-4">
+
+      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <form onSubmit={handleSearch} className="flex-1">
+
+        <form
+          onSubmit={handleSearch}
+          className="flex-1"
+        >
           <div className="flex">
+
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               placeholder="Search users..."
               className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+
             <button
               type="submit"
               className="bg-indigo-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-indigo-700"
             >
               Search
             </button>
+
           </div>
         </form>
 
         <select
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
+          onChange={(e) =>
+            setRoleFilter(e.target.value)
+          }
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Roles</option>
@@ -280,33 +502,67 @@ function UsersManagement() {
           <option value="creator">Creator</option>
           <option value="admin">Admin</option>
         </select>
+
       </div>
 
-      <p className="text-sm text-gray-500">{pagination.total} users found</p>
+      <p className="text-sm text-gray-500">
+        {pagination.total} users found
+      </p>
 
       {loading ? (
         <div className="animate-pulse space-y-3">
+
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-12 rounded"
+            ></div>
           ))}
+
         </div>
       ) : (
+
         <div className="overflow-x-auto">
+
           <table className="min-w-full divide-y divide-gray-200">
+
             <thead className="bg-gray-50">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Name
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Email
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Role
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Joined
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
+
               {users.map((user) => (
                 <tr key={user._id}>
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {user.name}
                   </td>
@@ -320,103 +576,145 @@ function UsersManagement() {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={user.isActive ? 'active' : 'inactive'} />
+                    <StatusBadge
+                      status={
+                        user.isActive
+                          ? 'active'
+                          : 'inactive'
+                      }
+                    />
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(
+                      user.createdAt
+                    ).toLocaleDateString()}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+
                     <button
-                      onClick={() => toggleUserStatus(user._id)}
+                      onClick={() =>
+                        toggleUserStatus(user._id)
+                      }
                       className={`text-sm font-medium ${
                         user.isActive
                           ? 'text-red-600 hover:text-red-500'
                           : 'text-green-600 hover:text-green-500'
                       }`}
                     >
-                      {user.isActive ? 'Deactivate' : 'Activate'}
+                      {user.isActive
+                        ? 'Deactivate'
+                        : 'Activate'}
                     </button>
 
                     {user.role !== 'admin' && (
                       <button
-                        onClick={() => deleteUser(user._id)}
+                        onClick={() =>
+                          deleteUser(user._id)
+                        }
                         className="text-sm font-medium text-red-600 hover:text-red-500"
                       >
                         Delete
                       </button>
                     )}
+
                   </td>
+
                 </tr>
               ))}
+
             </tbody>
+
           </table>
+
         </div>
       )}
 
       {pagination.totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
+
           <button
-            onClick={() => fetchUsers(pagination.currentPage - 1)}
-            disabled={pagination.currentPage === 1}
+            onClick={() =>
+              fetchUsers(
+                pagination.currentPage - 1
+              )
+            }
+            disabled={
+              pagination.currentPage === 1
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Previous
           </button>
 
           <span className="px-3 py-1 text-sm">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            Page {pagination.currentPage} of{' '}
+            {pagination.totalPages}
           </span>
 
           <button
-            onClick={() => fetchUsers(pagination.currentPage + 1)}
-            disabled={pagination.currentPage === pagination.totalPages}
+            onClick={() =>
+              fetchUsers(
+                pagination.currentPage + 1
+              )
+            }
+            disabled={
+              pagination.currentPage ===
+              pagination.totalPages
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Next
           </button>
+
         </div>
       )}
+
     </div>
   );
 }
 
 // ============ Products Tab ============
+
 function ProductsManagement() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0 });
 
-  const buildImageUrl = (path) => {
-    if (!path) return '/placeholder-product.jpg';
-
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
-    const normalized = path.startsWith('/') ? path : `/${path}`;
-    return `${apiBase}${normalized}`;
-  };
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+  });
 
   const fetchProducts = async (page = 1) => {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams({ page, limit: 20 });
+      const params = new URLSearchParams({
+        page,
+        limit: 20,
+      });
 
-      if (search) params.append('search', search);
+      if (search) {
+        params.append('search', search);
+      }
 
-      const response = await axios.get(`${apiBase}/api/admin/products?${params}`);
+      const response = await axios.get(
+        `${apiBase}/api/admin/products?${params}`
+      );
 
       setProducts(response.data.products);
 
       setPagination({
-        currentPage: parseInt(response.data.currentPage),
+        currentPage: parseInt(
+          response.data.currentPage
+        ),
         totalPages: response.data.totalPages,
         total: response.data.total,
       });
+
     } catch (error) {
       toast.error('Failed to load products');
     } finally {
@@ -433,28 +731,52 @@ function ProductsManagement() {
     fetchProducts(1);
   };
 
-  const toggleProductStatus = async (productId, currentStatus) => {
+  const toggleProductStatus = async (
+    productId,
+    currentStatus
+  ) => {
     try {
       await axios.patch(
         `${apiBase}/api/admin/products/${productId}/status`,
-        { isActive: !currentStatus }
+        {
+          isActive: !currentStatus,
+        }
       );
 
-      toast.success(`Product ${!currentStatus ? 'activated' : 'deactivated'}`);
+      toast.success(
+        `Product ${
+          !currentStatus
+            ? 'activated'
+            : 'deactivated'
+        }`
+      );
 
-      fetchProducts(pagination.currentPage);
+      fetchProducts(
+        pagination.currentPage
+      );
+
     } catch (error) {
-      toast.error('Failed to update product status');
+      toast.error(
+        'Failed to update product status'
+      );
     }
   };
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSearch} className="flex max-w-md">
+
+      {/* Search */}
+      <form
+        onSubmit={handleSearch}
+        className="flex max-w-md"
+      >
+
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
           placeholder="Search products..."
           className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
@@ -465,45 +787,97 @@ function ProductsManagement() {
         >
           Search
         </button>
+
       </form>
 
-      <p className="text-sm text-gray-500">{pagination.total} products found</p>
+      <p className="text-sm text-gray-500">
+        {pagination.total} products found
+      </p>
 
       {loading ? (
         <div className="animate-pulse space-y-3">
+
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-12 rounded"
+            ></div>
           ))}
+
         </div>
       ) : (
+
         <div className="overflow-x-auto">
+
           <table className="min-w-full divide-y divide-gray-200">
+
             <thead className="bg-gray-50">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Product
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Creator
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Category
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Price
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Stock
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
+
               {products.map((product) => (
                 <tr key={product._id}>
+
                   <td className="px-6 py-4 whitespace-nowrap">
+
                     <div className="flex items-center">
+
                       <img
-                        src={buildImageUrl(product.images?.[0])}
+                        src={buildImageUrl(
+                          product.images?.[0]
+                        )}
                         alt={product.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-10 w-10 rounded object-cover mr-3"
+                        onError={(e) => {
+                          e.currentTarget.onerror =
+                            null;
+                          e.currentTarget.src =
+                            '/placeholder-product.jpg';
+                        }}
                       />
+
                       <span className="text-sm font-medium text-gray-900">
                         {product.title}
                       </span>
+
                     </div>
+
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -519,6 +893,7 @@ function ProductsManagement() {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
+
                     <span
                       className={`text-sm font-medium ${
                         product.stock < 10
@@ -528,18 +903,29 @@ function ProductsManagement() {
                     >
                       {product.stock}
                     </span>
+
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
+
                     <StatusBadge
-                      status={product.isActive ? 'active' : 'inactive'}
+                      status={
+                        product.isActive
+                          ? 'active'
+                          : 'inactive'
+                      }
                     />
+
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
+
                     <button
                       onClick={() =>
-                        toggleProductStatus(product._id, product.isActive)
+                        toggleProductStatus(
+                          product._id,
+                          product.isActive
+                        )
                       }
                       className={`text-sm font-medium ${
                         product.isActive
@@ -547,57 +933,95 @@ function ProductsManagement() {
                           : 'text-green-600 hover:text-green-500'
                       }`}
                     >
-                      {product.isActive ? 'Deactivate' : 'Activate'}
+                      {product.isActive
+                        ? 'Deactivate'
+                        : 'Activate'}
                     </button>
+
                   </td>
+
                 </tr>
               ))}
+
             </tbody>
+
           </table>
+
         </div>
       )}
 
       {pagination.totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
+
           <button
-            onClick={() => fetchProducts(pagination.currentPage - 1)}
-            disabled={pagination.currentPage === 1}
+            onClick={() =>
+              fetchProducts(
+                pagination.currentPage - 1
+              )
+            }
+            disabled={
+              pagination.currentPage === 1
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Previous
           </button>
 
           <span className="px-3 py-1 text-sm">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            Page {pagination.currentPage} of{' '}
+            {pagination.totalPages}
           </span>
 
           <button
-            onClick={() => fetchProducts(pagination.currentPage + 1)}
-            disabled={pagination.currentPage === pagination.totalPages}
+            onClick={() =>
+              fetchProducts(
+                pagination.currentPage + 1
+              )
+            }
+            disabled={
+              pagination.currentPage ===
+              pagination.totalPages
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Next
           </button>
+
         </div>
       )}
+
     </div>
   );
 }
 
 // ============ Orders Tab ============
+
 function OrdersManagement() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0 });
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+  });
 
   const fetchOrders = async (page = 1) => {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams({ page, limit: 20 });
+      const params = new URLSearchParams({
+        page,
+        limit: 20,
+      });
 
-      if (statusFilter) params.append('status', statusFilter);
+      if (statusFilter) {
+        params.append(
+          'status',
+          statusFilter
+        );
+      }
 
       const response = await axios.get(
         `${apiBase}/api/orders/admin/all?${params}`
@@ -606,10 +1030,13 @@ function OrdersManagement() {
       setOrders(response.data.orders);
 
       setPagination({
-        currentPage: parseInt(response.data.currentPage),
+        currentPage: parseInt(
+          response.data.currentPage
+        ),
         totalPages: response.data.totalPages,
         total: response.data.total,
       });
+
     } catch (error) {
       toast.error('Failed to load orders');
     } finally {
@@ -621,18 +1048,30 @@ function OrdersManagement() {
     fetchOrders();
   }, [statusFilter]);
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (
+    orderId,
+    newStatus
+  ) => {
     try {
       await axios.patch(
         `${apiBase}/api/orders/${orderId}/status`,
-        { status: newStatus }
+        {
+          status: newStatus,
+        }
       );
 
-      toast.success(`Order status updated to ${newStatus}`);
+      toast.success(
+        `Order status updated to ${newStatus}`
+      );
 
-      fetchOrders(pagination.currentPage);
+      fetchOrders(
+        pagination.currentPage
+      );
+
     } catch (error) {
-      toast.error('Failed to update order status');
+      toast.error(
+        'Failed to update order status'
+      );
     }
   };
 
@@ -647,146 +1086,250 @@ function OrdersManagement() {
 
   return (
     <div className="space-y-4">
+
       <div className="flex items-center gap-4">
+
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) =>
+            setStatusFilter(e.target.value)
+          }
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="">All Statuses</option>
+
+          <option value="">
+            All Statuses
+          </option>
 
           {statusOptions.map((s) => (
             <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {s.charAt(0).toUpperCase() +
+                s.slice(1)}
             </option>
           ))}
+
         </select>
 
         <span className="text-sm text-gray-500">
           {pagination.total} orders found
         </span>
+
       </div>
 
       {loading ? (
         <div className="animate-pulse space-y-3">
+
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-12 rounded"
+            ></div>
           ))}
+
         </div>
       ) : (
+
         <div className="overflow-x-auto">
+
           <table className="min-w-full divide-y divide-gray-200">
+
             <thead className="bg-gray-50">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Products</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Order ID
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Customer
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Products
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Total
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Date
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
+
               {orders.map((order) => (
                 <tr key={order._id}>
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                     {order._id.slice(-8)}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {order.user?.name || order.customerInfo?.name || 'Guest'}
+                    {order.user?.name ||
+                      order.customerInfo?.name ||
+                      'Guest'}
                   </td>
 
                   <td className="px-6 py-4 text-sm text-gray-500">
+
                     {order.products
-                      .map((p) => p.product?.title || 'Unknown')
+                      .map(
+                        (p) =>
+                          p.product?.title ||
+                          'Unknown'
+                      )
                       .join(', ')
                       .substring(0, 50)}
 
                     {order.products
-                      .map((p) => p.product?.title || '')
+                      .map(
+                        (p) =>
+                          p.product?.title || ''
+                      )
                       .join(', ').length > 50
                       ? '...'
                       : ''}
+
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {formatPrice(order.totalAmount)}
+                    {formatPrice(
+                      order.totalAmount
+                    )}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={order.status} />
+                    <StatusBadge
+                      status={order.status}
+                    />
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {new Date(
+                      order.createdAt
+                    ).toLocaleDateString()}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
+
                     <select
                       value={order.status}
                       onChange={(e) =>
-                        updateOrderStatus(order._id, e.target.value)
+                        updateOrderStatus(
+                          order._id,
+                          e.target.value
+                        )
                       }
                       className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
+
                       {statusOptions.map((s) => (
-                        <option key={s} value={s}>
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        <option
+                          key={s}
+                          value={s}
+                        >
+                          {s.charAt(0).toUpperCase() +
+                            s.slice(1)}
                         </option>
                       ))}
+
                     </select>
+
                   </td>
+
                 </tr>
               ))}
+
             </tbody>
+
           </table>
+
         </div>
       )}
 
       {pagination.totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
+
           <button
-            onClick={() => fetchOrders(pagination.currentPage - 1)}
-            disabled={pagination.currentPage === 1}
+            onClick={() =>
+              fetchOrders(
+                pagination.currentPage - 1
+              )
+            }
+            disabled={
+              pagination.currentPage === 1
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Previous
           </button>
 
           <span className="px-3 py-1 text-sm">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            Page {pagination.currentPage} of{' '}
+            {pagination.totalPages}
           </span>
 
           <button
-            onClick={() => fetchOrders(pagination.currentPage + 1)}
-            disabled={pagination.currentPage === pagination.totalPages}
+            onClick={() =>
+              fetchOrders(
+                pagination.currentPage + 1
+              )
+            }
+            disabled={
+              pagination.currentPage ===
+              pagination.totalPages
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Next
           </button>
+
         </div>
       )}
+
     </div>
   );
 }
 
 // ============ Categories Tab ============
+
 function CategoriesManagement() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+  });
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${apiBase}/api/admin/categories`);
+      const response = await axios.get(
+        `${apiBase}/api/admin/categories`
+      );
+
       setCategories(response.data);
+
     } catch (error) {
-      toast.error('Failed to load categories');
+      toast.error(
+        'Failed to load categories'
+      );
     } finally {
       setLoading(false);
     }
@@ -805,19 +1348,36 @@ function CategoriesManagement() {
           `${apiBase}/api/admin/categories/${editingId}`,
           formData
         );
-        toast.success('Category updated');
+
+        toast.success(
+          'Category updated'
+        );
+
       } else {
-        await axios.post(`${apiBase}/api/admin/categories`, formData);
-        toast.success('Category created');
+        await axios.post(
+          `${apiBase}/api/admin/categories`,
+          formData
+        );
+
+        toast.success(
+          'Category created'
+        );
       }
 
-      setFormData({ name: '', description: '' });
+      setFormData({
+        name: '',
+        description: '',
+      });
+
       setShowForm(false);
       setEditingId(null);
+
       fetchCategories();
+
     } catch (error) {
       toast.error(
-        error.response?.data?.error || 'Failed to save category'
+        error.response?.data?.error ||
+          'Failed to save category'
       );
     }
   };
@@ -825,45 +1385,72 @@ function CategoriesManagement() {
   const startEdit = (category) => {
     setFormData({
       name: category.name,
-      description: category.description || '',
+      description:
+        category.description || '',
     });
 
     setEditingId(category._id);
     setShowForm(true);
   };
 
-  const deleteCategory = async (categoryId) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) {
+  const deleteCategory = async (
+    categoryId
+  ) => {
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this category?'
+      )
+    ) {
       return;
     }
 
     try {
-      await axios.delete(`${apiBase}/api/admin/categories/${categoryId}`);
-      toast.success('Category deleted');
+      await axios.delete(
+        `${apiBase}/api/admin/categories/${categoryId}`
+      );
+
+      toast.success(
+        'Category deleted'
+      );
+
       fetchCategories();
+
     } catch (error) {
       toast.error(
-        error.response?.data?.error || 'Failed to delete category'
+        error.response?.data?.error ||
+          'Failed to delete category'
       );
     }
   };
 
   return (
     <div className="space-y-4">
+
       <button
         onClick={() => {
           setShowForm(!showForm);
           setEditingId(null);
-          setFormData({ name: '', description: '' });
+
+          setFormData({
+            name: '',
+            description: '',
+          });
         }}
         className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
       >
-        {showForm ? 'Cancel' : 'Add Category'}
+        {showForm
+          ? 'Cancel'
+          : 'Add Category'}
       </button>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-4 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-gray-50 rounded-lg p-4 space-y-4"
+        >
+
           <div>
+
             <label className="block text-sm font-medium text-gray-700">
               Name
             </label>
@@ -880,9 +1467,11 @@ function CategoriesManagement() {
               required
               className="mt-1 block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
+
           </div>
 
           <div>
+
             <label className="block text-sm font-medium text-gray-700">
               Description
             </label>
@@ -892,44 +1481,75 @@ function CategoriesManagement() {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  description: e.target.value,
+                  description:
+                    e.target.value,
                 }))
               }
               rows={3}
               className="mt-1 block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
+
           </div>
 
           <button
             type="submit"
             className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
           >
-            {editingId ? 'Update' : 'Create'} Category
+            {editingId
+              ? 'Update'
+              : 'Create'}{' '}
+            Category
           </button>
+
         </form>
       )}
 
       {loading ? (
         <div className="animate-pulse space-y-3">
+
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-12 rounded"
+            ></div>
           ))}
+
         </div>
       ) : (
+
         <div className="overflow-x-auto">
+
           <table className="min-w-full divide-y divide-gray-200">
+
             <thead className="bg-gray-50">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Name
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Description
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Created
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
+
               {categories.map((category) => (
                 <tr key={category._id}>
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {category.name}
                   </td>
@@ -939,40 +1559,63 @@ function CategoriesManagement() {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(category.createdAt).toLocaleDateString()}
+                    {new Date(
+                      category.createdAt
+                    ).toLocaleDateString()}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+
                     <button
-                      onClick={() => startEdit(category)}
+                      onClick={() =>
+                        startEdit(category)
+                      }
                       className="text-indigo-600 hover:text-indigo-500 font-medium"
                     >
                       Edit
                     </button>
 
                     <button
-                      onClick={() => deleteCategory(category._id)}
+                      onClick={() =>
+                        deleteCategory(
+                          category._id
+                        )
+                      }
                       className="text-red-600 hover:text-red-500 font-medium"
                     >
                       Delete
                     </button>
+
                   </td>
+
                 </tr>
               ))}
+
             </tbody>
+
           </table>
+
         </div>
       )}
+
     </div>
   );
 }
 
 // ============ Messages Tab ============
+
 function MessagesManagement() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0 });
-  const [selectedMessage, setSelectedMessage] = useState(null);
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+  });
+
+  const [selectedMessage, setSelectedMessage] =
+    useState(null);
 
   const fetchContacts = async (page = 1) => {
     setLoading(true);
@@ -982,15 +1625,23 @@ function MessagesManagement() {
         `${apiBase}/api/contact?page=${page}&limit=20`
       );
 
-      setContacts(response.data.contacts);
+      setContacts(
+        response.data.contacts
+      );
 
       setPagination({
-        currentPage: parseInt(response.data.currentPage),
-        totalPages: response.data.totalPages,
+        currentPage: parseInt(
+          response.data.currentPage
+        ),
+        totalPages:
+          response.data.totalPages,
         total: response.data.total,
       });
+
     } catch (error) {
-      toast.error('Failed to load messages');
+      toast.error(
+        'Failed to load messages'
+      );
     } finally {
       setLoading(false);
     }
@@ -1000,55 +1651,98 @@ function MessagesManagement() {
     fetchContacts();
   }, []);
 
-  const markAsRead = async (contactId) => {
+  const markAsRead = async (
+    contactId
+  ) => {
     try {
-      await axios.patch(`${apiBase}/api/contact/${contactId}/read`);
-      fetchContacts(pagination.currentPage);
+      await axios.patch(
+        `${apiBase}/api/contact/${contactId}/read`
+      );
+
+      fetchContacts(
+        pagination.currentPage
+      );
+
     } catch (error) {
-      toast.error('Failed to update message');
+      toast.error(
+        'Failed to update message'
+      );
     }
   };
 
-  const deleteContact = async (contactId) => {
-    if (!window.confirm('Delete this message?')) return;
+  const deleteContact = async (
+    contactId
+  ) => {
+    if (
+      !window.confirm(
+        'Delete this message?'
+      )
+    ) {
+      return;
+    }
 
     try {
-      await axios.delete(`${apiBase}/api/contact/${contactId}`);
-      toast.success('Message deleted');
+      await axios.delete(
+        `${apiBase}/api/contact/${contactId}`
+      );
+
+      toast.success(
+        'Message deleted'
+      );
+
       setSelectedMessage(null);
-      fetchContacts(pagination.currentPage);
+
+      fetchContacts(
+        pagination.currentPage
+      );
+
     } catch (error) {
-      toast.error('Failed to delete message');
+      toast.error(
+        'Failed to delete message'
+      );
     }
   };
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">{pagination.total} messages</p>
+
+      <p className="text-sm text-gray-500">
+        {pagination.total} messages
+      </p>
 
       {selectedMessage && (
         <div className="bg-white shadow rounded-lg p-6 border border-indigo-200">
+
           <div className="flex justify-between items-start">
+
             <div>
+
               <h3 className="text-lg font-medium text-gray-900">
                 {selectedMessage.subject}
               </h3>
 
               <p className="text-sm text-gray-500">
-                From: {selectedMessage.name} ({selectedMessage.email})
+                From: {selectedMessage.name} (
+                {selectedMessage.email})
               </p>
 
               <p className="text-sm text-gray-500">
-                {new Date(selectedMessage.createdAt).toLocaleString()}
+                {new Date(
+                  selectedMessage.createdAt
+                ).toLocaleString()}
               </p>
+
             </div>
 
             <button
-              onClick={() => setSelectedMessage(null)}
+              onClick={() =>
+                setSelectedMessage(null)
+              }
               className="text-gray-400 hover:text-gray-500 text-sm"
             >
               Close
             </button>
+
           </div>
 
           <p className="mt-4 text-gray-700 whitespace-pre-wrap">
@@ -1056,9 +1750,14 @@ function MessagesManagement() {
           </p>
 
           <div className="mt-4 space-x-2">
+
             {!selectedMessage.isRead && (
               <button
-                onClick={() => markAsRead(selectedMessage._id)}
+                onClick={() =>
+                  markAsRead(
+                    selectedMessage._id
+                  )
+                }
                 className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
               >
                 Mark as Read
@@ -1066,33 +1765,54 @@ function MessagesManagement() {
             )}
 
             <button
-              onClick={() => deleteContact(selectedMessage._id)}
+              onClick={() =>
+                deleteContact(
+                  selectedMessage._id
+                )
+              }
               className="text-sm text-red-600 hover:text-red-500 font-medium"
             >
               Delete
             </button>
+
           </div>
+
         </div>
       )}
 
       {loading ? (
         <div className="animate-pulse space-y-3">
+
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded"></div>
+            <div
+              key={i}
+              className="bg-gray-200 h-12 rounded"
+            ></div>
           ))}
+
         </div>
       ) : contacts.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No messages yet.</p>
+
+        <p className="text-gray-500 text-center py-8">
+          No messages yet.
+        </p>
+
       ) : (
+
         <div className="space-y-2">
+
           {contacts.map((contact) => (
             <div
               key={contact._id}
               onClick={() => {
-                setSelectedMessage(contact);
+                setSelectedMessage(
+                  contact
+                );
 
                 if (!contact.isRead) {
-                  markAsRead(contact._id);
+                  markAsRead(
+                    contact._id
+                  );
                 }
               }}
               className={`p-4 rounded-lg border cursor-pointer hover:bg-gray-50 ${
@@ -1101,8 +1821,11 @@ function MessagesManagement() {
                   : 'bg-indigo-50 border-indigo-200'
               }`}
             >
+
               <div className="flex justify-between items-start">
+
                 <div>
+
                   <p
                     className={`text-sm ${
                       contact.isRead
@@ -1114,84 +1837,126 @@ function MessagesManagement() {
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {contact.name} - {contact.email}
+                    {contact.name} -{' '}
+                    {contact.email}
                   </p>
+
                 </div>
 
                 <div className="flex items-center space-x-2">
+
                   {!contact.isRead && (
                     <span className="inline-block w-2 h-2 rounded-full bg-indigo-600"></span>
                   )}
 
                   <span className="text-xs text-gray-400">
-                    {new Date(contact.createdAt).toLocaleDateString()}
+                    {new Date(
+                      contact.createdAt
+                    ).toLocaleDateString()}
                   </span>
+
                 </div>
+
               </div>
 
               <p className="mt-1 text-sm text-gray-500 truncate">
                 {contact.message}
               </p>
+
             </div>
           ))}
+
         </div>
       )}
 
       {pagination.totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
+
           <button
-            onClick={() => fetchContacts(pagination.currentPage - 1)}
-            disabled={pagination.currentPage === 1}
+            onClick={() =>
+              fetchContacts(
+                pagination.currentPage - 1
+              )
+            }
+            disabled={
+              pagination.currentPage === 1
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Previous
           </button>
 
           <span className="px-3 py-1 text-sm">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            Page {pagination.currentPage} of{' '}
+            {pagination.totalPages}
           </span>
 
           <button
-            onClick={() => fetchContacts(pagination.currentPage + 1)}
-            disabled={pagination.currentPage === pagination.totalPages}
+            onClick={() =>
+              fetchContacts(
+                pagination.currentPage + 1
+              )
+            }
+            disabled={
+              pagination.currentPage ===
+              pagination.totalPages
+            }
             className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
           >
             Next
           </button>
+
         </div>
       )}
+
     </div>
   );
 }
 
 // ============ Main Admin Dashboard Layout ============
+
 export default function AdminDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (location.pathname === '/admin/') {
-      navigate('/admin', { replace: true });
+      navigate('/admin', {
+        replace: true,
+      });
     }
-  }, [location.pathname, navigate]);
+  }, [
+    location.pathname,
+    navigate,
+  ]);
 
   return (
     <div className="bg-gray-100 min-h-screen">
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Admin Dashboard
         </h1>
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 mb-8">
+
           <nav
             className="-mb-px flex space-x-8 overflow-x-auto"
             aria-label="Tabs"
           >
+
             {tabs.map((tab) => {
+
               const isActive =
-                location.pathname === tab.path ||
-                (tab.path === '/admin' && location.pathname === '/admin');
+                location.pathname ===
+                  tab.path ||
+                (
+                  tab.path === '/admin' &&
+                  location.pathname ===
+                    '/admin'
+                );
 
               return (
                 <Link
@@ -1203,24 +1968,58 @@ export default function AdminDashboard() {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
+
                   <tab.icon className="h-5 w-5" />
-                  <span>{tab.name}</span>
+
+                  <span>
+                    {tab.name}
+                  </span>
+
                 </Link>
               );
             })}
+
           </nav>
+
         </div>
 
         {/* Tab Content */}
         <Routes>
-          <Route index element={<Overview />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="products" element={<ProductsManagement />} />
-          <Route path="orders" element={<OrdersManagement />} />
-          <Route path="categories" element={<CategoriesManagement />} />
-          <Route path="messages" element={<MessagesManagement />} />
+
+          <Route
+            index
+            element={<Overview />}
+          />
+
+          <Route
+            path="users"
+            element={<UsersManagement />}
+          />
+
+          <Route
+            path="products"
+            element={<ProductsManagement />}
+          />
+
+          <Route
+            path="orders"
+            element={<OrdersManagement />}
+          />
+
+          <Route
+            path="categories"
+            element={<CategoriesManagement />}
+          />
+
+          <Route
+            path="messages"
+            element={<MessagesManagement />}
+          />
+
         </Routes>
+
       </div>
+
     </div>
   );
 }

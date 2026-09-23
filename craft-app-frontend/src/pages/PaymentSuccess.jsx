@@ -14,13 +14,13 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState(null);
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const API_URL = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
 
   useEffect(() => {
     const processPaymentSuccess = async () => {
       try {
-        // Razorpay payment details
         const orderId =
           searchParams.get('orderId') ||
           searchParams.get('order_id');
@@ -29,12 +29,10 @@ const PaymentSuccess = () => {
           searchParams.get('paymentId') ||
           searchParams.get('payment_id');
 
-        // Store payment ID only for display/debugging if available
         if (paymentId) {
           console.log('Razorpay Payment ID:', paymentId);
         }
 
-        // Fetch order details
         if (orderId) {
           try {
             const response = await axios.get(
@@ -93,7 +91,6 @@ const PaymentSuccess = () => {
 
         <div className="bg-white rounded-xl shadow-lg p-8">
 
-          {/* Success Icon */}
           <div className="text-center">
 
             <CheckCircleIcon className="mx-auto h-20 w-20 text-green-600" />
@@ -109,7 +106,6 @@ const PaymentSuccess = () => {
 
           </div>
 
-          {/* Order Details */}
           {orderDetails && (
             <div className="mt-8 bg-gray-50 rounded-lg p-5">
 
@@ -117,7 +113,6 @@ const PaymentSuccess = () => {
                 Order Details
               </h3>
 
-              {/* Order ID */}
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-500">
                   Order ID
@@ -128,7 +123,6 @@ const PaymentSuccess = () => {
                 </span>
               </div>
 
-              {/* Amount */}
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-500">
                   Total Amount
@@ -142,7 +136,6 @@ const PaymentSuccess = () => {
                 </span>
               </div>
 
-              {/* Payment Method */}
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-500">
                   Payment Method
@@ -153,7 +146,6 @@ const PaymentSuccess = () => {
                 </span>
               </div>
 
-              {/* Order Status */}
               <div className="flex justify-between items-center py-2">
 
                 <span className="text-sm text-gray-500">
@@ -166,7 +158,6 @@ const PaymentSuccess = () => {
 
               </div>
 
-              {/* Order Date */}
               {orderDetails.createdAt && (
                 <div className="flex justify-between items-center py-2">
 
@@ -186,7 +177,6 @@ const PaymentSuccess = () => {
             </div>
           )}
 
-          {/* Success Message */}
           <div className="mt-6 rounded-lg bg-green-50 border border-green-200 p-4">
 
             <div className="flex">
@@ -210,7 +200,6 @@ const PaymentSuccess = () => {
 
           </div>
 
-          {/* Buttons */}
           <div className="mt-8 space-y-3">
 
             <button

@@ -20,12 +20,16 @@ export default function Products() {
   } = useProduct();
 
   const { isAuthenticated } = useAuth();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [favoriteIds, setFavoriteIds] = useState(new Set());
 
-  const apiBase =
-    import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  // Backend API URL
+  const apiBase = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
 
+  // Load user's wishlist
   useEffect(() => {
     if (isAuthenticated) {
       axios
@@ -35,8 +39,9 @@ export default function Products() {
         })
         .catch(() => {});
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, apiBase]);
 
+  // Add/remove product from wishlist
   const toggleFavorite = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
@@ -48,48 +53,82 @@ export default function Products() {
 
     try {
       if (favoriteIds.has(productId)) {
-        await axios.delete(`${apiBase}/api/auth/favorites/${productId}`);
+        await axios.delete(
+          `${apiBase}/api/auth/favorites/${productId}`
+        );
 
         setFavoriteIds((prev) => {
           const next = new Set(prev);
           next.delete(productId);
           return next;
         });
-      } else {
-        await axios.post(`${apiBase}/api/auth/favorites/${productId}`);
 
-        setFavoriteIds((prev) => new Set(prev).add(productId));
+        toast.success('Removed from wishlist');
+      } else {
+        await axios.post(
+          `${apiBase}/api/auth/favorites/${productId}`
+        );
+
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.add(productId);
+          return next;
+        });
+
+        toast.success('Added to wishlist');
       }
     } catch (error) {
       toast.error('Failed to update wishlist');
     }
   };
 
+  // Build the correct URL for product images
   const buildImageUrl = (path) => {
-    if (!path) return '/placeholder-product.jpg';
+    if (!path) {
+      return '/placeholder-product.jpg';
+    }
 
-    const normalized = path.startsWith('/') ? path : `/${path}`;
+    // Already a complete URL
+    if (
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
 
-    return `${apiBase}${normalized}`;
+    // Backend returns paths such as:
+    // /uploads/image.png
+    if (path.startsWith('/')) {
+      return `${apiBase}${path}`;
+    }
+
+    // Handle paths such as:
+    // uploads/image.png
+    return `${apiBase}/${path}`;
   };
 
+  // Fetch products whenever filters/page changes
   useEffect(() => {
     fetchProducts(filters, pagination.currentPage);
   }, [filters, pagination.currentPage]);
 
+  // Search
   const handleSearch = (e) => {
     e.preventDefault();
     setFilters({ search: searchTerm });
   };
 
+  // Category filter
   const handleCategoryChange = (categoryId) => {
     setFilters({ category: categoryId });
   };
 
+  // Sorting
   const handleSortChange = (sortBy, sortOrder) => {
     setFilters({ sortBy, sortOrder });
   };
 
+  // Pagination
   const handlePageChange = (page) => {
     fetchProducts(filters, page);
   };
@@ -114,7 +153,10 @@ export default function Products() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
             {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-md">
+            <form
+              onSubmit={handleSearch}
+              className="flex-1 max-w-md"
+            >
               <div className="relative">
                 <input
                   type="text"
@@ -159,7 +201,10 @@ export default function Products() {
                 <option value="">All Categories</option>
 
                 {categories.map((category) => (
-                  <option key={category._id} value={category._id}>
+                  <option
+                    key={category._id}
+                    value={category._id}
+                  >
                     {category.name}
                   </option>
                 ))}
@@ -215,9 +260,14 @@ export default function Products() {
         {loading ? (
           <div className="mt-12 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
             {[...Array(9)].map((_, i) => (
-              <div key={i} className="animate-pulse">
+              <div
+                key={i}
+                className="animate-pulse"
+              >
                 <div className="bg-gray-200 h-64 rounded-lg mb-4"></div>
+
                 <div className="bg-gray-200 h-4 rounded mb-2"></div>
+
                 <div className="bg-gray-200 h-4 rounded w-1/2"></div>
               </div>
             ))}
@@ -238,7 +288,14 @@ export default function Products() {
                     <img
                       src={buildImageUrl(product.images?.[0])}
                       alt={product.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-center object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          '/placeholder-product.jpg';
+                      }}
                     />
 
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
@@ -269,11 +326,14 @@ export default function Products() {
                     <div className="min-w-0 flex-1 mr-2">
 
                       <h3 className="text-sm font-medium text-gray-700 truncate">
-                        <Link to={`/products/${product._id}`}>
+                        <Link
+                          to={`/products/${product._id}`}
+                        >
                           <span
                             aria-hidden="true"
                             className="absolute inset-0"
                           />
+
                           {product.title}
                         </Link>
                       </h3>
@@ -291,9 +351,9 @@ export default function Products() {
                     {/* INR Price */}
                     <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                       ₹
-                      {Number(product.price || 0).toLocaleString(
-                        'en-IN'
-                      )}
+                      {Number(
+                        product.price || 0
+                      ).toLocaleString('en-IN')}
                     </p>
 
                   </div>
@@ -305,6 +365,7 @@ export default function Products() {
             {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="mt-12 flex items-center justify-center">
+
                 <nav className="flex items-center space-x-2">
 
                   <button
@@ -313,7 +374,9 @@ export default function Products() {
                         pagination.currentPage - 1
                       )
                     }
-                    disabled={pagination.currentPage === 1}
+                    disabled={
+                      pagination.currentPage === 1
+                    }
                     className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
@@ -326,9 +389,12 @@ export default function Products() {
                       return (
                         <button
                           key={page}
-                          onClick={() => handlePageChange(page)}
+                          onClick={() =>
+                            handlePageChange(page)
+                          }
                           className={`px-3 py-2 text-sm font-medium rounded-md ${
-                            page === pagination.currentPage
+                            page ===
+                            pagination.currentPage
                               ? 'bg-indigo-600 text-white'
                               : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
                           }`}

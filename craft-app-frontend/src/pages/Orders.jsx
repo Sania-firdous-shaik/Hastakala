@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+
 import {
   ShoppingBagIcon,
   TruckIcon,
@@ -13,12 +14,35 @@ import {
 
 const Orders = () => {
   const { user, isAuthenticated } = useAuth();
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const API_URL = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
+
+  // Build product image URL
+  const buildImageUrl = (path) => {
+    if (!path) {
+      return '/placeholder-product.jpg';
+    }
+
+    if (
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return `${API_URL}${path}`;
+    }
+
+    return `${API_URL}/${path}`;
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -57,7 +81,8 @@ const Orders = () => {
 
       const script = document.createElement('script');
 
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.src =
+        'https://checkout.razorpay.com/v1/checkout.js';
 
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
@@ -72,11 +97,12 @@ const Orders = () => {
       const isLoaded = await loadRazorpay();
 
       if (!isLoaded) {
-        toast.error('Failed to load Razorpay. Please try again.');
+        toast.error(
+          'Failed to load Razorpay. Please try again.'
+        );
         return;
       }
 
-      // Create Razorpay order on backend
       const response = await axios.post(
         `${API_URL}/api/payments/create-order`,
         {
@@ -156,7 +182,7 @@ const Orders = () => {
 
               toast.error(
                 verifyResponse.data.error ||
-                'Payment verification failed.'
+                  'Payment verification failed.'
               );
             }
           } catch (error) {
@@ -182,7 +208,7 @@ const Orders = () => {
 
             toast.error(
               error.response?.data?.error ||
-              'Payment verification failed.'
+                'Payment verification failed.'
             );
           }
         },
@@ -196,17 +222,20 @@ const Orders = () => {
 
       const razorpay = new window.Razorpay(options);
 
-      razorpay.on('payment.failed', function (response) {
-        console.error(
-          'Razorpay payment failed:',
-          response.error
-        );
+      razorpay.on(
+        'payment.failed',
+        function (response) {
+          console.error(
+            'Razorpay payment failed:',
+            response.error
+          );
 
-        toast.error(
-          response.error?.description ||
-          'Payment failed. Please try again.'
-        );
-      });
+          toast.error(
+            response.error?.description ||
+              'Payment failed. Please try again.'
+          );
+        }
+      );
 
       razorpay.open();
     } catch (error) {
@@ -227,7 +256,7 @@ const Orders = () => {
 
       toast.error(
         error.response?.data?.error ||
-        'Failed to create payment order. Please try again.'
+          'Failed to create payment order. Please try again.'
       );
     }
   };
@@ -257,7 +286,11 @@ const Orders = () => {
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Are you sure you want to cancel this order?')) {
+    if (
+      !window.confirm(
+        'Are you sure you want to cancel this order?'
+      )
+    ) {
       return;
     }
 
@@ -270,11 +303,14 @@ const Orders = () => {
 
       fetchOrders();
     } catch (error) {
-      console.error('Error cancelling order:', error);
+      console.error(
+        'Error cancelling order:',
+        error
+      );
 
       toast.error(
         error.response?.data?.error ||
-        'Failed to cancel order'
+          'Failed to cancel order'
       );
     }
   };
@@ -330,7 +366,9 @@ const Orders = () => {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => {
-              const StatusIcon = getStatusIcon(order.status);
+              const StatusIcon = getStatusIcon(
+                order.status
+              );
 
               return (
                 <div
@@ -348,7 +386,9 @@ const Orders = () => {
 
                           <p className="text-sm text-gray-500">
                             Placed on{' '}
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {new Date(
+                              order.createdAt
+                            ).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -362,7 +402,9 @@ const Orders = () => {
                         </span>
 
                         <button
-                          onClick={() => viewOrderDetails(order)}
+                          onClick={() =>
+                            viewOrderDetails(order)
+                          }
                           className="text-indigo-600 hover:text-indigo-900"
                         >
                           <EyeIcon className="h-5 w-5" />
@@ -379,7 +421,9 @@ const Orders = () => {
                           </p>
 
                           <p className="text-lg font-semibold text-gray-900">
-                            {formatPrice(order.totalAmount)}
+                            {formatPrice(
+                              order.totalAmount
+                            )}
                           </p>
                         </div>
 
@@ -411,7 +455,9 @@ const Orders = () => {
                       {order.status === 'pending' && (
                         <button
                           onClick={() =>
-                            initializeRazorpayPayment(order)
+                            initializeRazorpayPayment(
+                              order
+                            )
                           }
                           className="px-4 py-2 border border-green-300 rounded-md text-sm font-medium text-green-700 hover:bg-green-50"
                         >
@@ -422,7 +468,9 @@ const Orders = () => {
                       {order.status === 'pending' && (
                         <button
                           onClick={() =>
-                            handleCancelOrder(order._id)
+                            handleCancelOrder(
+                              order._id
+                            )
                           }
                           className="px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 hover:bg-red-50"
                         >
@@ -431,7 +479,9 @@ const Orders = () => {
                       )}
 
                       <button
-                        onClick={() => viewOrderDetails(order)}
+                        onClick={() =>
+                          viewOrderDetails(order)
+                        }
                         className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >
                         View Details
@@ -455,11 +505,14 @@ const Orders = () => {
 
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    Order Details - #{selectedOrder._id.slice(-6)}
+                    Order Details - #
+                    {selectedOrder._id.slice(-6)}
                   </h3>
 
                   <button
-                    onClick={() => setShowOrderDetails(false)}
+                    onClick={() =>
+                      setShowOrderDetails(false)
+                    }
                     className="text-gray-400 hover:text-gray-600"
                   >
                     <XCircleIcon className="h-6 w-6" />
@@ -477,7 +530,9 @@ const Orders = () => {
                     <div className="mt-2 flex items-center">
                       {(() => {
                         const StatusIcon =
-                          getStatusIcon(selectedOrder.status);
+                          getStatusIcon(
+                            selectedOrder.status
+                          );
 
                         return (
                           <span
@@ -518,11 +573,13 @@ const Orders = () => {
                       </p>
 
                       <p className="mt-1">
-                        Email: {selectedOrder.shippingAddress?.email}
+                        Email:{' '}
+                        {selectedOrder.shippingAddress?.email}
                       </p>
 
                       <p>
-                        Phone: {selectedOrder.shippingAddress?.phone}
+                        Phone:{' '}
+                        {selectedOrder.shippingAddress?.phone}
                       </p>
                     </div>
                   </div>
@@ -534,43 +591,49 @@ const Orders = () => {
                     </h4>
 
                     <div className="mt-2 space-y-3">
-                      {selectedOrder.products?.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
-                        >
-                          <img
-                            src={
-                              item.product?.images?.[0]
-                                ? `${API_URL}${item.product.images[0]}`
-                                : '/placeholder-product.jpg'
-                            }
-                            alt={item.product?.title || 'Product'}
-                            className="w-12 h-12 rounded object-cover"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src =
-                                '/placeholder-product.jpg';
-                            }}
-                          />
+                      {selectedOrder.products?.map(
+                        (item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
+                          >
+                            <img
+                              src={buildImageUrl(
+                                item.product?.images?.[0]
+                              )}
+                              alt={
+                                item.product?.title ||
+                                'Product'
+                              }
+                              className="w-12 h-12 rounded object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror =
+                                  null;
+                                e.currentTarget.src =
+                                  '/placeholder-product.jpg';
+                              }}
+                            />
 
-                          <div className="flex-1">
-                            <h5 className="text-sm font-medium text-gray-900">
-                              {item.product?.title || 'Product'}
-                            </h5>
+                            <div className="flex-1">
+                              <h5 className="text-sm font-medium text-gray-900">
+                                {item.product?.title ||
+                                  'Product'}
+                              </h5>
 
-                            <p className="text-sm text-gray-500">
-                              Qty: {item.quantity}
-                            </p>
+                              <p className="text-sm text-gray-500">
+                                Qty: {item.quantity}
+                              </p>
+                            </div>
+
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatPrice(
+                                item.product?.price *
+                                  item.quantity
+                              )}
+                            </div>
                           </div>
-
-                          <div className="text-sm font-medium text-gray-900">
-                            {formatPrice(
-                              item.product?.price * item.quantity
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   </div>
 
@@ -581,7 +644,9 @@ const Orders = () => {
                       <span>Total</span>
 
                       <span>
-                        {formatPrice(selectedOrder.totalAmount)}
+                        {formatPrice(
+                          selectedOrder.totalAmount
+                        )}
                       </span>
                     </div>
 
@@ -596,7 +661,9 @@ const Orders = () => {
 
                 <div className="mt-6 flex justify-end">
                   <button
-                    onClick={() => setShowOrderDetails(false)}
+                    onClick={() =>
+                      setShowOrderDetails(false)
+                    }
                     className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Close

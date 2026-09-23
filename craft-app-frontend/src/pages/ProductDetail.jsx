@@ -40,17 +40,27 @@ export default function ProductDetail() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const apiBase =
-    import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const apiBase = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
 
   const buildImageUrl = (path) => {
-    if (!path) return '/placeholder-product.jpg';
+    if (!path) {
+      return '/placeholder-product.jpg';
+    }
 
-    const normalized = path.startsWith('/')
-      ? path
-      : `/${path}`;
+    if (
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
 
-    return `${apiBase}${normalized}`;
+    if (path.startsWith('/')) {
+      return `${apiBase}${path}`;
+    }
+
+    return `${apiBase}/${path}`;
   };
 
   const formatPrice = (price) => {
@@ -73,14 +83,14 @@ export default function ProductDetail() {
       if (user) {
         const userReview = response.data.reviews.find(
           (r) =>
-            r.user._id === user.id ||
-            r.user._id === user._id
+            r.user?._id === user.id ||
+            r.user?._id === user._id
         );
 
         setHasReviewed(!!userReview);
       }
     } catch (error) {
-      // Reviews are non-critical, fail silently
+      // Reviews are non-critical
     }
   };
 
@@ -132,7 +142,7 @@ export default function ProductDetail() {
     } catch (error) {
       toast.error(
         error.response?.data?.error ||
-        'Failed to submit review'
+          'Failed to submit review'
       );
     } finally {
       setSubmittingReview(false);
@@ -177,7 +187,7 @@ export default function ProductDetail() {
     } catch (error) {
       toast.error(
         error.response?.data?.error ||
-        'Failed to update wishlist'
+          'Failed to update wishlist'
       );
     }
   };
@@ -247,6 +257,7 @@ export default function ProductDetail() {
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
+
             <svg
               className="mx-auto h-16 w-16 text-gray-300 mb-4"
               fill="none"
@@ -275,6 +286,7 @@ export default function ProductDetail() {
             >
               Browse Products
             </Link>
+
           </div>
         </div>
       </div>
@@ -287,7 +299,11 @@ export default function ProductDetail() {
 
         {/* Breadcrumbs */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
-          <Link to="/" className="hover:text-gray-700">
+
+          <Link
+            to="/"
+            className="hover:text-gray-700"
+          >
             Home
           </Link>
 
@@ -303,6 +319,7 @@ export default function ProductDetail() {
           {product.category?.name && (
             <>
               <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+
               <span className="text-gray-500">
                 {product.category.name}
               </span>
@@ -314,24 +331,37 @@ export default function ProductDetail() {
           <span className="text-gray-900 font-medium truncate max-w-xs">
             {product.title}
           </span>
+
         </nav>
 
         <div className="lg:grid lg:grid-cols-2 lg:gap-x-8 lg:items-start">
 
           {/* Product Images */}
           <div className="lg:col-span-1">
+
             <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-200">
+
               <img
-                src={buildImageUrl(product.images?.[selectedImage])}
+                src={buildImageUrl(
+                  product.images?.[selectedImage]
+                )}
                 alt={product.title}
                 className="w-full h-full object-center object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    '/placeholder-product.jpg';
+                }}
               />
+
             </div>
 
             {/* Thumbnail Strip */}
             {product.images?.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-3">
+
                 {product.images.map((image, index) => (
+
                   <button
                     key={index}
                     onClick={() =>
@@ -343,15 +373,25 @@ export default function ProductDetail() {
                         : 'border-transparent hover:border-gray-300'
                     }`}
                   >
+
                     <img
                       src={buildImageUrl(image)}
                       alt={`${product.title} ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          '/placeholder-product.jpg';
+                      }}
                     />
+
                   </button>
+
                 ))}
+
               </div>
             )}
+
           </div>
 
           {/* Product Info */}
@@ -372,6 +412,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="mt-6">
+
               <h3 className="sr-only">
                 Description
               </h3>
@@ -379,6 +420,7 @@ export default function ProductDetail() {
               <div className="text-base text-gray-700 space-y-6">
                 <p>{product.description}</p>
               </div>
+
             </div>
 
             <div className="mt-6">
@@ -447,7 +489,10 @@ export default function ProductDetail() {
                     type="button"
                     onClick={() =>
                       setQuantity((q) =>
-                        Math.min(product.stock, q + 1)
+                        Math.min(
+                          product.stock,
+                          q + 1
+                        )
                       )
                     }
                     disabled={
@@ -459,6 +504,7 @@ export default function ProductDetail() {
                   </button>
 
                 </div>
+
               </div>
 
               <div className="mt-8 flex space-x-4">
@@ -497,8 +543,11 @@ export default function ProductDetail() {
                 </button>
 
               </div>
+
             </div>
+
           </div>
+
         </div>
 
         {/* Reviews */}
@@ -510,6 +559,7 @@ export default function ProductDetail() {
 
           {/* Rating Summary */}
           <div className="mt-4 flex items-center space-x-4">
+
             {renderStars(
               Math.round(reviewStats.avgRating)
             )}
@@ -522,19 +572,23 @@ export default function ProductDetail() {
                 : 'reviews'}
               )
             </span>
+
           </div>
 
           {/* Review Form */}
           {isAuthenticated && !hasReviewed && (
+
             <form
               onSubmit={handleSubmitReview}
               className="mt-8 bg-gray-50 rounded-lg p-6"
             >
+
               <h3 className="text-lg font-medium text-gray-900">
                 Write a Review
               </h3>
 
               <div className="mt-4">
+
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Rating
                 </label>
@@ -548,9 +602,11 @@ export default function ProductDetail() {
                       rating: star
                     }))
                 )}
+
               </div>
 
               <div className="mt-4">
+
                 <label
                   htmlFor="comment"
                   className="block text-sm font-medium text-gray-700"
@@ -571,6 +627,7 @@ export default function ProductDetail() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   placeholder="Share your experience with this product..."
                 />
+
               </div>
 
               <button
@@ -582,7 +639,9 @@ export default function ProductDetail() {
                   ? 'Submitting...'
                   : 'Submit Review'}
               </button>
+
             </form>
+
           )}
 
           {isAuthenticated && hasReviewed && (
@@ -594,12 +653,12 @@ export default function ProductDetail() {
           {!isAuthenticated && (
             <p className="mt-4 text-sm text-gray-500">
               Please{' '}
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="text-indigo-600 hover:text-indigo-500"
               >
                 log in
-              </a>{' '}
+              </Link>{' '}
               to leave a review.
             </p>
           )}
@@ -608,28 +667,36 @@ export default function ProductDetail() {
           <div className="mt-8 space-y-6">
 
             {reviews.length === 0 ? (
+
               <p className="text-gray-500">
                 No reviews yet. Be the first to review this product!
               </p>
+
             ) : (
+
               reviews.map((review) => (
+
                 <div
                   key={review._id}
                   className="border-b border-gray-200 pb-6"
                 >
+
                   <div className="flex items-center justify-between">
 
                     <div className="flex items-center space-x-3">
 
                       <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+
                         <span className="text-sm font-medium text-indigo-600">
                           {review.user?.name
                             ?.charAt(0)
                             ?.toUpperCase()}
                         </span>
+
                       </div>
 
                       <div>
+
                         <p className="text-sm font-medium text-gray-900">
                           {review.user?.name}
                         </p>
@@ -639,6 +706,7 @@ export default function ProductDetail() {
                             review.createdAt
                           ).toLocaleDateString()}
                         </p>
+
                       </div>
 
                     </div>
@@ -649,6 +717,7 @@ export default function ProductDetail() {
                         user._id === review.user?._id ||
                         user.role === 'admin'
                       ) && (
+
                         <button
                           onClick={() =>
                             handleDeleteReview(review._id)
@@ -657,6 +726,7 @@ export default function ProductDetail() {
                         >
                           Delete
                         </button>
+
                       )}
 
                   </div>
@@ -672,13 +742,16 @@ export default function ProductDetail() {
                   )}
 
                 </div>
+
               ))
+
             )}
 
           </div>
+
         </div>
+
       </div>
     </div>
   );
 }
-

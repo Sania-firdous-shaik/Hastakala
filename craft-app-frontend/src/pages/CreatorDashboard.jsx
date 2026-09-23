@@ -27,7 +27,6 @@ const CreatorDashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [categories, setCategories] = useState([]);
 
-  // Form states
   const [productForm, setProductForm] = useState({
     title: '',
     description: '',
@@ -37,8 +36,28 @@ const CreatorDashboard = () => {
     images: []
   });
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const API_URL = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
+
+  const buildImageUrl = (path) => {
+    if (!path) {
+      return '/placeholder-product.jpg';
+    }
+
+    if (
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return `${API_URL}${path}`;
+    }
+
+    return `${API_URL}/${path}`;
+  };
 
   const formatPrice = (price) => {
     return `₹${Number(price || 0).toLocaleString('en-IN')}`;
@@ -327,7 +346,6 @@ const CreatorDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             Creator Dashboard
@@ -338,7 +356,6 @@ const CreatorDashboard = () => {
           </p>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-8">
 
@@ -381,11 +398,9 @@ const CreatorDashboard = () => {
           </nav>
         </div>
 
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
               <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -464,7 +479,6 @@ const CreatorDashboard = () => {
 
             </div>
 
-            {/* Recent Orders */}
             <div className="bg-white shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
 
@@ -554,7 +568,6 @@ const CreatorDashboard = () => {
           </div>
         )}
 
-        {/* Products Tab */}
         {activeTab === 'products' && (
           <div className="space-y-6">
 
@@ -574,7 +587,6 @@ const CreatorDashboard = () => {
 
             </div>
 
-            {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
               {products?.map((product) => (
@@ -588,9 +600,14 @@ const CreatorDashboard = () => {
                     {product.images &&
                     product.images.length > 0 ? (
                       <img
-                        src={`${API_URL}${product.images[0]}`}
+                        src={buildImageUrl(product.images[0])}
                         alt={product.title}
                         className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            '/placeholder-product.jpg';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -714,7 +731,6 @@ const CreatorDashboard = () => {
           </div>
         )}
 
-        {/* Orders Tab */}
         {activeTab === 'orders' && (
           <div className="space-y-6">
 
@@ -787,13 +803,24 @@ const CreatorDashboard = () => {
                                     >
 
                                       <img
-                                        src={`${API_URL}${item.product.images[0]}`}
-                                        alt={item.product.title}
+                                        src={buildImageUrl(
+                                          item.product?.images?.[0]
+                                        )}
+                                        alt={
+                                          item.product?.title ||
+                                          'Product'
+                                        }
                                         className="w-8 h-8 rounded object-cover mr-2"
+                                        onError={(e) => {
+                                          e.currentTarget.onerror = null;
+                                          e.currentTarget.src =
+                                            '/placeholder-product.jpg';
+                                        }}
                                       />
 
                                       <span className="text-sm">
-                                        {item.product.title}{' '}
+                                        {item.product?.title ||
+                                          'Product'}{' '}
                                         (x{item.quantity})
                                       </span>
 
@@ -875,7 +902,6 @@ const CreatorDashboard = () => {
           </div>
         )}
 
-        {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
 
@@ -988,7 +1014,6 @@ const CreatorDashboard = () => {
           </div>
         )}
 
-        {/* Add/Edit Product Modal */}
         {(showAddProduct || editingProduct) && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
 
@@ -1173,5 +1198,3 @@ const CreatorDashboard = () => {
     </div>
   );
 };
-
-export default CreatorDashboard;

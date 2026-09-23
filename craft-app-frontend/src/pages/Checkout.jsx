@@ -21,7 +21,6 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState(null);
-
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
   const [shippingForm, setShippingForm] = useState({
@@ -38,8 +37,30 @@ const Checkout = () => {
 
   const [touched, setTouched] = useState({});
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  // Backend URL
+  const API_URL = (
+    import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  ).replace(/\/$/, '');
+
+  // Build product image URL
+  const buildImageUrl = (path) => {
+    if (!path) {
+      return '/placeholder-product.jpg';
+    }
+
+    if (
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return `${API_URL}${path}`;
+    }
+
+    return `${API_URL}/${path}`;
+  };
 
   const formatPrice = (price) => {
     return `₹${Number(price || 0).toLocaleString('en-IN', {
@@ -55,7 +76,7 @@ const Checkout = () => {
     }
 
     if (user) {
-      setShippingForm(prev => ({
+      setShippingForm((prev) => ({
         ...prev,
         firstName: user.name?.split(' ')[0] || '',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
@@ -74,14 +95,14 @@ const Checkout = () => {
   const handleShippingChange = (e) => {
     const { name, value } = e.target;
 
-    setShippingForm(prev => ({
+    setShippingForm((prev) => ({
       ...prev,
       [name]: value
     }));
   };
 
   const handleBlur = (e) => {
-    setTouched(prev => ({
+    setTouched((prev) => ({
       ...prev,
       [e.target.name]: true
     }));
@@ -101,7 +122,10 @@ const Checkout = () => {
       return 'Invalid email address';
     }
 
-    if (name === 'phone' && shippingForm.phone.length < 10) {
+    if (
+      name === 'phone' &&
+      shippingForm.phone.length < 10
+    ) {
       return 'Must be at least 10 digits';
     }
 
@@ -127,6 +151,7 @@ const Checkout = () => {
             .replace(/([A-Z])/g, ' $1')
             .toLowerCase()}`
         );
+
         return false;
       }
     }
@@ -156,7 +181,9 @@ const Checkout = () => {
 
       const script = document.createElement('script');
 
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.src =
+        'https://checkout.razorpay.com/v1/checkout.js';
+
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
 
@@ -173,6 +200,7 @@ const Checkout = () => {
         toast.error(
           'Unable to load Razorpay. Please check your internet connection.'
         );
+
         return;
       }
 
@@ -226,6 +254,7 @@ const Checkout = () => {
             if (verifyResponse.data.success) {
               setOrderId(order._id);
               setOrderPlaced(true);
+
               clearCart();
 
               toast.success(
@@ -257,19 +286,22 @@ const Checkout = () => {
 
       const razorpay = new window.Razorpay(options);
 
-      razorpay.on('payment.failed', function (response) {
-        console.error(
-          'Razorpay payment failed:',
-          response.error
-        );
+      razorpay.on(
+        'payment.failed',
+        function (response) {
+          console.error(
+            'Razorpay payment failed:',
+            response.error
+          );
 
-        setLoading(false);
+          setLoading(false);
 
-        toast.error(
-          response.error?.description ||
-            'Payment failed. Please try again.'
-        );
-      });
+          toast.error(
+            response.error?.description ||
+              'Payment failed. Please try again.'
+          );
+        }
+      );
 
       razorpay.open();
     } catch (error) {
@@ -298,7 +330,7 @@ const Checkout = () => {
 
     try {
       const orderData = {
-        products: cart.map(item => ({
+        products: cart.map((item) => ({
           product: item.product._id,
           quantity: item.quantity,
           price: item.product.price
@@ -306,14 +338,19 @@ const Checkout = () => {
 
         totalAmount: cartTotal,
 
-        shippingAddress: `${shippingForm.firstName} ${shippingForm.lastName}, ${shippingForm.address}, ${shippingForm.city}, ${shippingForm.state} ${shippingForm.zipCode}, ${shippingForm.country}`,
+        shippingAddress:
+          `${shippingForm.firstName} ${shippingForm.lastName}, ` +
+          `${shippingForm.address}, ` +
+          `${shippingForm.city}, ` +
+          `${shippingForm.state} ` +
+          `${shippingForm.zipCode}, ` +
+          `${shippingForm.country}`,
 
-        customerName: `${shippingForm.firstName} ${shippingForm.lastName}`,
+        customerName:
+          `${shippingForm.firstName} ${shippingForm.lastName}`,
 
         customerEmail: shippingForm.email,
-
         customerPhone: shippingForm.phone,
-
         paymentMethod: 'razorpay'
       };
 
@@ -332,7 +369,10 @@ const Checkout = () => {
         );
       }
     } catch (error) {
-      console.error('Order creation error:', error);
+      console.error(
+        'Order creation error:',
+        error
+      );
 
       toast.error(
         error.response?.data?.error ||
@@ -416,15 +456,22 @@ const Checkout = () => {
               </h2>
 
               <div className="space-y-4">
-                {cart?.map(item => (
+                {cart?.map((item) => (
                   <div
                     key={item.product._id}
                     className="flex items-center space-x-4"
                   >
                     <img
-                      src={`${API_URL}${item.product.images?.[0] || ''}`}
+                      src={buildImageUrl(
+                        item.product.images?.[0]
+                      )}
                       alt={item.product.title}
                       className="w-16 h-16 rounded object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          '/placeholder-product.jpg';
+                      }}
                     />
 
                     <div className="flex-1">
@@ -457,10 +504,10 @@ const Checkout = () => {
                 </div>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  Shipping and taxes will be calculated at the next step.
+                  Shipping and taxes will be calculated
+                  at the next step.
                 </p>
               </div>
-
             </div>
           </div>
 
@@ -484,7 +531,8 @@ const Checkout = () => {
                   {/* First Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      First Name <span className="text-red-500">*</span>
+                      First Name{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -511,7 +559,8 @@ const Checkout = () => {
                   {/* Last Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Last Name <span className="text-red-500">*</span>
+                      Last Name{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -538,7 +587,8 @@ const Checkout = () => {
                   {/* Email */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Email <span className="text-red-500">*</span>
+                      Email{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -565,7 +615,8 @@ const Checkout = () => {
                   {/* Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Phone <span className="text-red-500">*</span>
+                      Phone{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -593,7 +644,8 @@ const Checkout = () => {
                   {/* Address */}
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Address <span className="text-red-500">*</span>
+                      Address{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -621,7 +673,8 @@ const Checkout = () => {
                   {/* City */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      City <span className="text-red-500">*</span>
+                      City{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -649,7 +702,8 @@ const Checkout = () => {
                   {/* State */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      State <span className="text-red-500">*</span>
+                      State{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -677,7 +731,8 @@ const Checkout = () => {
                   {/* PIN */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      PIN Code <span className="text-red-500">*</span>
+                      PIN Code{' '}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <input
@@ -718,7 +773,6 @@ const Checkout = () => {
                       required
                     />
                   </div>
-
                 </div>
               </div>
 
@@ -738,9 +792,13 @@ const Checkout = () => {
                       name="paymentMethod"
                       type="radio"
                       value="razorpay"
-                      checked={paymentMethod === 'razorpay'}
+                      checked={
+                        paymentMethod === 'razorpay'
+                      }
                       onChange={(e) =>
-                        setPaymentMethod(e.target.value)
+                        setPaymentMethod(
+                          e.target.value
+                        )
                       }
                       className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                     />
@@ -808,14 +866,14 @@ const Checkout = () => {
                 </button>
 
                 <p className="mt-3 text-sm text-gray-500 text-center">
-                  By placing your order, you agree to our terms and conditions.
+                  By placing your order, you agree to our
+                  terms and conditions.
                 </p>
 
               </div>
 
             </form>
           </div>
-
         </div>
       </div>
     </div>
