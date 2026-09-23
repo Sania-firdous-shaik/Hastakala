@@ -18,6 +18,7 @@ import {
 
 const CreatorDashboard = () => {
   const { user } = useAuth();
+
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -78,9 +79,9 @@ const CreatorDashboard = () => {
         axios.get(`${API_URL}/api/orders/creator/stats`)
       ]);
 
-      setProducts(productsRes.data.products);
-      setOrders(ordersRes.data.orders);
-      setStats(statsRes.data);
+      setProducts(productsRes.data.products || []);
+      setOrders(ordersRes.data.orders || []);
+      setStats(statsRes.data || {});
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
@@ -222,7 +223,6 @@ const CreatorDashboard = () => {
       );
 
       toast.success('Product deleted successfully!');
-
       fetchDashboardData();
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -241,7 +241,6 @@ const CreatorDashboard = () => {
       );
 
       toast.success('Product status updated!');
-
       fetchDashboardData();
     } catch (error) {
       console.error(
@@ -273,8 +272,8 @@ const CreatorDashboard = () => {
       description: product.description,
       price: product.price.toString(),
       stock: product.stock.toString(),
-      category: product.category._id,
-      images: product.images
+      category: product.category?._id || product.category || '',
+      images: product.images || []
     });
   };
 
@@ -322,7 +321,6 @@ const CreatorDashboard = () => {
       );
 
       toast.success('Order deleted');
-
       fetchDashboardData();
     } catch (error) {
       console.error('Error deleting order:', error);
@@ -358,7 +356,6 @@ const CreatorDashboard = () => {
 
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-8">
-
             {[
               {
                 id: 'overview',
@@ -394,7 +391,6 @@ const CreatorDashboard = () => {
                 {tab.name}
               </button>
             ))}
-
           </nav>
         </div>
 
@@ -488,7 +484,6 @@ const CreatorDashboard = () => {
 
                 {orders?.length > 0 ? (
                   <div className="overflow-x-auto">
-
                     <table className="min-w-full divide-y divide-gray-200">
 
                       <thead className="bg-gray-50">
@@ -516,7 +511,6 @@ const CreatorDashboard = () => {
                       </thead>
 
                       <tbody className="bg-white divide-y divide-gray-200">
-
                         {orders?.slice(0, 5).map((order) => (
                           <tr key={order._id}>
 
@@ -551,10 +545,9 @@ const CreatorDashboard = () => {
 
                           </tr>
                         ))}
-
                       </tbody>
-                    </table>
 
+                    </table>
                   </div>
                 ) : (
                   <p className="text-gray-500 text-center py-4">
@@ -572,7 +565,6 @@ const CreatorDashboard = () => {
           <div className="space-y-6">
 
             <div className="flex justify-between items-center">
-
               <h2 className="text-2xl font-bold text-gray-900">
                 My Products
               </h2>
@@ -584,7 +576,6 @@ const CreatorDashboard = () => {
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Add Product
               </button>
-
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -628,7 +619,6 @@ const CreatorDashboard = () => {
                     </p>
 
                     <div className="mt-2 flex items-center justify-between">
-
                       <span className="text-lg font-bold text-gray-900">
                         {formatPrice(product.price)}
                       </span>
@@ -636,7 +626,6 @@ const CreatorDashboard = () => {
                       <span className="text-sm text-gray-500">
                         Stock: {product.stock}
                       </span>
-
                     </div>
 
                     <div className="mt-3 flex items-center justify-between">
@@ -689,7 +678,6 @@ const CreatorDashboard = () => {
                         </button>
 
                       </div>
-
                     </div>
 
                   </div>
@@ -712,7 +700,6 @@ const CreatorDashboard = () => {
                 </p>
 
                 <div className="mt-6">
-
                   <button
                     onClick={() =>
                       setShowAddProduct(true)
@@ -722,7 +709,6 @@ const CreatorDashboard = () => {
                     <PlusIcon className="h-4 w-4 mr-2" />
                     Add Product
                   </button>
-
                 </div>
 
               </div>
@@ -739,7 +725,6 @@ const CreatorDashboard = () => {
             </h2>
 
             <div className="bg-white shadow rounded-lg">
-
               <div className="px-4 py-5 sm:p-6">
 
                 {orders?.length > 0 ? (
@@ -774,6 +759,10 @@ const CreatorDashboard = () => {
                             Date
                           </th>
 
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action
+                          </th>
+
                         </tr>
                       </thead>
 
@@ -795,7 +784,7 @@ const CreatorDashboard = () => {
 
                               <div className="space-y-1">
 
-                                {order.products.map(
+                                {order.products?.map(
                                   (item, index) => (
                                     <div
                                       key={index}
@@ -856,8 +845,7 @@ const CreatorDashboard = () => {
 
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
 
-                              {order.status ===
-                                'pending' && (
+                              {order.status === 'pending' && (
                                 <button
                                   onClick={() =>
                                     handleDeletePendingOrder(
@@ -910,7 +898,6 @@ const CreatorDashboard = () => {
             </h2>
 
             <div className="bg-white shadow rounded-lg">
-
               <div className="px-4 py-5 sm:p-6">
 
                 <div className="space-y-6">
@@ -1133,7 +1120,6 @@ const CreatorDashboard = () => {
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       required
                     >
-
                       <option value="">
                         Select a category
                       </option>
@@ -1147,7 +1133,6 @@ const CreatorDashboard = () => {
                             {category.name}
                           </option>
                         ))}
-
                     </select>
                   </div>
 
@@ -1198,3 +1183,6 @@ const CreatorDashboard = () => {
     </div>
   );
 };
+
+export default CreatorDashboard;
+
